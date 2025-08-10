@@ -9,36 +9,36 @@
 
 
 import React, { useState, useCallback, useEffect, useContext } from 'react';
-import { Navbar } from './components/Navbar';
-import { Sidebar } from './components/Sidebar';
-import { Dock, DockItemDefinition } from './components/Dock';
-import FuturisticBackground from './components/FuturisticBackground';
-import { AIChat } from './components/AIChat';
-import { WelcomeView } from './components/views/WelcomeView';
-import { DashboardView } from './components/views/DashboardView';
-import { DataUploadView } from './components/views/DataUploadView';
-import { DataTableView } from './components/views/DataTableView';
-import VisualizationView from './components/views/VisualizationView';
-import { SettingsView } from './components/views/SettingsView';
-import { OnlineConnectorsView } from './components/views/OnlineConnectorsView';
-import { ProjectDetailsView } from './components/views/ProjectDetailsView';
-import { AdvancedAIToolsView } from './components/views/AdvancedAIToolsView';
-import { GenericPlaceholderView } from './components/views/GenericPlaceholderView';
-import { PivotTableView } from './components/views/PivotTableView'; 
-import { FeaturesStatusModal } from './components/FeaturesStatusModal'; 
-import { AboutView } from './components/views/AboutView';
-import { StatisticalAnalysisView } from './components/views/StatisticalAnalysisView';
-import { WorkflowView } from './components/views/WorkflowView';
-import { AIAssistantView } from './components/views/AIAssistantView';
-import { DiagrammingMatrixView } from './components/views/DiagrammingMatrixView';
-import { RoutePlannerView } from './components/views/RoutePlannerView';
-import { WorkflowAutomationView } from './components/views/WorkflowAutomationView';
-import AiDocument from './components/views/AiDocument'; // Import the new view
-import { DataCleaningView } from './components/views/DataCleaningView';
-import { FileLibraryView } from './components/views/FileLibraryView'; // New view
+import { Navbar } from './src/components/Navbar';
+import { Sidebar } from './src/components/Sidebar';
+import { Dock, DockItemDefinition } from './src/components/Dock';
+import FuturisticBackground from './src/components/FuturisticBackground';
+import { AIChat } from './src/components/AIChat';
+import { WelcomeView } from './src/components/views/WelcomeView';
+import { DashboardView } from './src/components/views/DashboardView';
+import { DataUploadView } from './src/components/views/DataUploadView';
+import { DataTableView } from './src/components/views/DataTableView';
+import VisualizationView from './src/components/views/VisualizationView';
+import { SettingsView } from './src/components/views/SettingsView';
+import { OnlineConnectorsView } from './src/components/views/OnlineConnectorsView';
+import { ProjectDetailsView } from './src/components/views/ProjectDetailsView';
+import { AdvancedAIToolsView } from './src/components/views/AdvancedAIToolsView';
+import { GenericPlaceholderView } from './src/components/views/GenericPlaceholderView';
+import { PivotTableView } from './src/components/views/PivotTableView'; 
+import { FeaturesStatusModal } from './src/components/FeaturesStatusModal'; 
+import { AboutView } from './src/components/views/AboutView';
+import { StatisticalAnalysisView } from './src/components/views/StatisticalAnalysisView';
+import { WorkflowView } from './src/components/views/WorkflowView';
+import { AIAssistantView } from './src/components/views/AIAssistantView';
+import { DiagrammingMatrixView } from './src/components/views/DiagrammingMatrixView';
+import { RoutePlannerView } from './src/components/views/RoutePlannerView';
+import { WorkflowAutomationView } from './src/components/views/WorkflowAutomationView';
+import AiDocument from './src/components/views/AiDocument'; // Import the new view
+import { DataCleaningView } from './src/components/views/DataCleaningView';
+import { FileLibraryView } from './src/components/views/FileLibraryView'; // New view
 import { DOCK_ITEMS, NAV_MENU_ITEMS, SIDEBAR_SECTIONS } from './constants';
 import { IconType, ViewKey, Theme, IconProps, RecentProject, PivotReportState } from './types'; 
-import { DataContext, DataProvider } from './contexts/DataContext';
+import { DataContext, DataProvider } from './src/contexts/DataContext';
 
 // Polyfill process.env for browser environment and set the API key.
 // In a real production environment, this would be handled by build tools and environment variables.
