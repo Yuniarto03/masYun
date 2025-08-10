@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MasYun Data Analyzer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Firefox Scrollbar Styling */
+        html {
+            scrollbar-width: thin;
+            scrollbar-color: #d946ef #0e182d; /* thumb (magenta), track (dark blue) */
+        }
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+            overflow: hidden; /* Prevent scrollbars on body due to fixed elements */
+        }
+        /* Custom scrollbar for webkit browsers - Magenta/Cyan/Blue Holographic Theme */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(14, 24, 45, 0.5); /* Dark blue, semi-transparent base */
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(45deg, #d946ef, #22d3ee, #3b82f6); /* Magenta to Cyan to Blue */
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.2s ease-in-out;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(45deg, #f0abfc, #67e8f9, #60a5fa); /* Brighter gradient on hover */
+            box-shadow: 0 0 8px rgba(103, 232, 249, 0.5); /* Cyan glow on hover */
+        }
+        ::-webkit-scrollbar-thumb:active {
+            background: linear-gradient(135deg, #f0abfc, #67e8f9, #60a5fa); /* Inverted gradient on click */
+            box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.4); /* Inner glow on click */
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none; /* For Webkit browsers */
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+
+        /* --- NEW: Sidebar Beautification --- */
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem; /* 12px */
+            padding: 0.625rem 0.75rem; /* 10px 12px */
+            border-radius: 0.375rem; /* 6px */
+            position: relative;
+            overflow: hidden;
+            transition: all 0.25s ease-out;
+            color: #d1d5db; /* gray-300 */
+        }
+        .sidebar-item-icon {
+            width: 1.25rem; /* 20px */
+            height: 1.25rem;
+            flex-shrink: 0;
+            color: #9ca3af; /* gray-400 */
+            transition: all 0.25s ease-out;
+        }
+        .sidebar-item::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 0.375rem;
+            background: radial-gradient(circle at center, rgba(168, 85, 247, 0.25), transparent 80%);
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.3s ease-out;
+        }
+        .sidebar-item:hover::before {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .sidebar-item:hover {
+            background-color: rgba(168, 85, 247, 0.1); /* purple-500/10 */
+            color: #ffffff;
+        }
+        .sidebar-item:hover .sidebar-item-icon {
+            color: #ffffff;
+            transform: scale(1.1);
+        }
+        .sidebar-item-active {
+            background-color: rgba(139, 92, 246, 0.2); /* purple-600/20 */
+            color: #ffffff;
+            font-weight: 600;
+        }
+        .sidebar-item-active .sidebar-item-icon {
+            color: #c4b5fd; /* violet-300 */
+        }
+        .sidebar-indicator {
+            position: absolute;
+            left: -4px; /* Move outside the padding */
+            width: 4px;
+            background: linear-gradient(180deg, #67e8f9, #a855f7); /* cyan to purple */
+            border-radius: 0 4px 4px 0;
+            box-shadow: 0 0 8px #a855f7, 0 0 12px #67e8f9;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0;
+        }
+
+
+        /* --- NEW: PIVOT TABLE REDESIGN (FLAT & PROFESSIONAL) --- */
+        .pivot-table-container table {
+            border-collapse: collapse;
+        }
+        .pivot-table-container th,
+        .pivot-table-container td {
+            transition: background-color 0.15s ease-in-out;
+        }
+        .pivot-row-header-clickable {
+            cursor: pointer;
+        }
+
+        /* --- PIVOT THEME: Vibrant Hologram (Default) --- */
+        .pivot-header-default, .pivot-header-row-desc, .pivot-header-grand-total { border-bottom: 1px solid #4a044e; text-shadow: 0 1px 2px rgba(0,0,0,0.6); }
+        .pivot-cell-row-header, .pivot-cell-default, .pivot-cell-grand-total, .pivot-cell-subtotal-header, .pivot-cell-subtotal-value { border-right: 1px solid #1f2937; border-bottom: 1px solid #1f2937; }
+        
+        .pivot-header-default { background-color: #37305A; color: #CFFAFE; }
+        .pivot-header-row-desc { background-color: #39165A; color: #F3E8FF; font-weight: 600; }
+        .pivot-header-grand-total { background-color: #4a044e; color: #fbcfe8; font-weight: bold; }
+
+        .pivot-cell-default { background-color: #111827; color: #E5E7EB; }
+        .pivot-cell-row-header { background-color: #1a2035; color: #D1D5DB; font-weight: 500; }
+        .pivot-cell-grand-total { background-color: #39165A; color: #fbcfe8; font-weight: bold; }
+        .pivot-cell-subtotal-header { background-color: #3e013e; color: #FCD34D; font-weight: bold; }
+        .pivot-cell-subtotal-value { background-color: #1F2937; color: #FBBF24; font-weight: 500; }
+
+        .zebra-stripe .pivot-cell-default { background-color: #1e1b2e !important; }
+        .pivot-table-container tbody tr:hover .pivot-cell-default, .pivot-table-container tbody tr:hover .pivot-cell-subtotal-value { background-color: #3a325a !important; }
+        .pivot-table-container tbody tr:hover .pivot-cell-row-header, .pivot-row-header-clickable:hover { background-color: #4a427a !important; }
+
+
+        /* --- PIVOT THEME: Cyberpunk Neon --- */
+        .theme-cyber-header-default, .theme-cyber-header-row-desc, .theme-cyber-header-grand-total { border-bottom: 1px solid #ff00ff; }
+        .theme-cyber-cell-row-header, .theme-cyber-cell-default, .theme-cyber-cell-grand-total, .theme-cyber-cell-subtotal-header, .theme-cyber-cell-subtotal-value { border-right: 1px solid #222; border-bottom: 1px solid #222; }
+        
+        .theme-cyber-header-default { background-color: #111; color: #00ffff; text-shadow: 0 0 3px #00ffff; }
+        .theme-cyber-header-row-desc { background-color: #2a002a; color: #ff00ff; font-weight: 600; text-shadow: 0 0 4px #ff00ff; }
+        .theme-cyber-header-grand-total { background-color: #4d4d00; color: #ffff00; font-weight: bold; text-shadow: 0 0 4px #ffff00; }
+
+        .theme-cyber-cell-default { background-color: #0a0a0a; color: #ccc; }
+        .theme-cyber-cell-row-header { background-color: #1a1a1a; color: #00ffff; font-weight: 500; }
+        .theme-cyber-cell-grand-total { background-color: #333300; color: #ffff00; font-weight: bold; }
+        .theme-cyber-cell-subtotal-header { background-color: #002b2b; color: #00ff00; font-weight: bold; text-shadow: 0 0 3px #00ff00; }
+        .theme-cyber-cell-subtotal-value { background-color: #111; color: #9acd32; font-weight: 500; }
+        
+        .zebra-stripe-cyber .theme-cyber-cell-default { background-color: #141414 !important; }
+        .pivot-table-container tbody tr:hover .theme-cyber-cell-default, .pivot-table-container tbody tr:hover .theme-cyber-cell-subtotal-value { background-color: #333 !important; }
+        .pivot-table-container tbody tr:hover .theme-cyber-cell-row-header, .pivot-row-header-clickable.theme-cyber-cell-row-header:hover { background-color: #2c2c2c !important; }
+
+        /* --- PIVOT THEME: Arctic Dawn (Light Theme) --- */
+        .theme-arctic-header-default, .theme-arctic-header-row-desc, .theme-arctic-header-grand-total { border-bottom: 1px solid #cbd5e1; }
+        .theme-arctic-cell-row-header, .theme-arctic-cell-default, .theme-arctic-cell-grand-total, .theme-arctic-cell-subtotal-header, .theme-arctic-cell-subtotal-value { border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; }
+        
+        .theme-arctic-header-default { background-color: #eef2f7; color: #2d3748; }
+        .theme-arctic-header-row-desc { background-color: #e2e8f0; color: #1e293b; font-weight: 600; }
+        .theme-arctic-header-grand-total { background-color: #475569; color: #f1f5f9; font-weight: bold; }
+
+        .theme-arctic-cell-default { background-color: #ffffff; color: #334152; }
+        .theme-arctic-cell-row-header { background-color: #f8fafc; color: #475569; font-weight: 500; }
+        .theme-arctic-cell-grand-total { background-color: #64748b; color: #f1f5f9; font-weight: bold; }
+        .theme-arctic-cell-subtotal-header { background-color: #dbeafe; color: #1e3a8a; font-weight: bold; }
+        .theme-arctic-cell-subtotal-value { background-color: #f0f4f9; color: #1e40af; font-weight: 500; }
+        
+        .zebra-stripe-arctic .theme-arctic-cell-default { background-color: #f8fafc !important; }
+        .pivot-table-container tbody tr:hover .theme-arctic-cell-default, .pivot-table-container tbody tr:hover .theme-arctic-cell-subtotal-value { background-color: #eef2f7 !important; }
+        .pivot-table-container tbody tr:hover .theme-arctic-cell-row-header, .pivot-row-header-clickable.theme-arctic-cell-row-header:hover { background-color: #e2e8f0 !important; }
+
+        /* --- PIVOT THEME: Professional Blue (Dark) --- */
+        .theme-pro-header-default, .theme-pro-header-row-desc, .theme-pro-header-grand-total { border-bottom: 1px solid #4b5563; }
+        .theme-pro-cell-row-header, .theme-pro-cell-default, .theme-pro-cell-grand-total, .theme-pro-cell-subtotal-header, .theme-pro-cell-subtotal-value { border-right: 1px solid #374151; border-bottom: 1px solid #374151; }
+
+        .theme-pro-header-default { background-color: #1f2937; color: #d1d5db; }
+        .theme-pro-header-row-desc { background-color: #111827; color: #9ca3af; font-weight: 600; }
+        .theme-pro-header-grand-total { background-color: #0369a1; color: #e0f2fe; font-weight: bold; }
+
+        .theme-pro-cell-default { background-color: #111827; color: #d1d5db; }
+        .theme-pro-cell-row-header { background-color: #1f2937; color: #9ca3af; font-weight: 500; }
+        .theme-pro-cell-grand-total { background-color: #075985; color: #e0f2fe; font-weight: bold; }
+        .theme-pro-cell-subtotal-header { background-color: #164e63; color: #a5f3fc; font-weight: bold; }
+        .theme-pro-cell-subtotal-value { background-color: #1e293b; color: #bae6fd; font-weight: 500; }
+        
+        .zebra-stripe-pro .theme-pro-cell-default { background-color: #1e293b !important; }
+        .pivot-table-container tbody tr:hover .theme-pro-cell-default, .pivot-table-container tbody tr:hover .theme-pro-cell-subtotal-value { background-color: #334155 !important; }
+        .pivot-table-container tbody tr:hover .theme-pro-cell-row-header, .pivot-row-header-clickable.theme-pro-cell-row-header:hover { background-color: #475569 !important; }
+        
+        /* --- NEW: Data Table Search Highlight --- */
+        tr.search-highlight-row {
+            background-color: rgba(217, 70, 239, 0.15) !important; /* magenta-500 @ 15% */
+        }
+        tr.search-highlight-row td {
+            font-weight: bold !important;
+            color: #f5d0fe !important; /* magenta-100 */
+        }
+        tr.search-highlight-row:hover {
+            background-color: rgba(217, 70, 239, 0.25) !important; /* magenta-500 @ 25% on hover */
+        }
+
+        /* --- Holographic Panel Style --- */
+        .panel-holographic {
+            position: relative;
+            background-color: rgba(14, 24, 45, 0.65); /* Deep blue, semi-transparent base */
+            backdrop-filter: blur(10px); /* Increased blur for more depth */
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(139, 92, 246, 0.3); /* Use a purple that blends blue and magenta */
+            box-shadow: 
+                0 0 25px rgba(59, 130, 246, 0.1), /* Blue glow */
+                0 0 25px rgba(217, 70, 239, 0.1), /* Magenta glow */
+                inset 0 0 15px rgba(34, 197, 94, 0.1); /* Subtle inner green glow */
+            overflow: hidden;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        .panel-holographic::before,
+        .panel-holographic::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            border-radius: 0.5rem;
+        }
+
+        /* Glowing corner effect with new tri-color scheme */
+        .panel-holographic::before {
+            background:
+                radial-gradient(circle at top left, rgba(59, 130, 246, 0.35), transparent 30%),
+                radial-gradient(circle at bottom right, rgba(217, 70, 239, 0.35), transparent 30%),
+                radial-gradient(circle at top right, rgba(34, 197, 94, 0.3), transparent 35%);
+            animation: pulse-glow 8s infinite alternate ease-in-out;
+        }
+
+        /* Scanline effect with new color */
+        .panel-holographic::after {
+            background: linear-gradient(
+                0deg,
+                transparent 49.5%,
+                rgba(34, 197, 94, 0.12) 50%,
+                transparent 50.5%
+            );
+            background-size: 100% 4px;
+            animation: scanline 15s linear infinite;
+        }
+
+        .sidebar.panel-holographic {
+            border: none;
+        }
+
+        @keyframes pulse-glow {
+            from { opacity: 0.7; filter: brightness(0.9); }
+            to { opacity: 1; filter: brightness(1.2); }
+        }
+
+        @keyframes scanline {
+            from { background-position: 0 0; }
+            to { background-position: 0 -200px; }
+        }
+
+        /* --- NEW: CONDITIONAL FORMATTING STYLES --- */
+        .format-bg-red-glow {
+            background-color: rgba(239, 68, 68, 0.15) !important;
+            box-shadow: inset 0 0 8px rgba(239, 68, 68, 0.4);
+        }
+        .format-bg-green-glow {
+            background-color: rgba(34, 197, 94, 0.15) !important;
+            box-shadow: inset 0 0 8px rgba(34, 197, 94, 0.4);
+        }
+        .format-bg-yellow-glow {
+            background-color: rgba(234, 179, 8, 0.15) !important;
+            box-shadow: inset 0 0 8px rgba(234, 179, 8, 0.4);
+        }
+        .format-bg-blue-glow {
+            background-color: rgba(59, 130, 246, 0.15) !important;
+            box-shadow: inset 0 0 8px rgba(59, 130, 246, 0.4);
+        }
+        .format-bg-purple-glow {
+            background-color: rgba(168, 85, 247, 0.15) !important;
+            box-shadow: inset 0 0 8px rgba(168, 85, 247, 0.4);
+        }
+        .format-text-bold {
+            font-weight: 700 !important;
+            text-shadow: 0 0 3px currentColor;
+        }
+        /* Color scale example */
+        .color-scale-green-1 { background-color: rgba(34, 197, 94, 0.08) !important; }
+        .color-scale-green-2 { background-color: rgba(34, 197, 94, 0.16) !important; }
+        .color-scale-green-3 { background-color: rgba(34, 197, 94, 0.24) !important; }
+        .color-scale-green-4 { background-color: rgba(34, 197, 94, 0.32) !important; }
+        .color-scale-green-5 { background-color: rgba(34, 197, 94, 0.40) !important; }
+
+        /* --- Holographic Dropzone Style --- */
+        .dropzone-holographic {
+            border: 2px dashed rgba(139, 92, 246, 0.4); /* purple-ish, semi-transparent */
+            background-color: rgba(14, 24, 45, 0.2); /* very subtle dark blue base */
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dropzone-holographic:hover {
+            border-color: rgba(59, 130, 246, 0.6); /* blue-ish on hover */
+            background-color: rgba(14, 24, 45, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .dropzone-holographic.active {
+            border-style: solid;
+            border-color: rgba(34, 197, 94, 0.8); /* green when active */
+            background: 
+                radial-gradient(ellipse at center, rgba(34, 197, 94, 0.25) 0%, rgba(14, 24, 45, 0.5) 70%),
+                rgba(14, 24, 45, 0.5);
+            box-shadow: 
+                inset 0 0 40px rgba(34, 197, 94, 0.4), /* inner green glow */
+                0 0 30px rgba(34, 197, 94, 0.3); /* outer green glow */
+            transform: scale(1.02) translateY(-2px);
+        }
+
+        /* Adding a subtle grid pattern to the dropzone */
+        .dropzone-holographic::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px),
+                linear-gradient(to right, rgba(59, 130, 246, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            pointer-events: none;
+        }
+        .dropzone-holographic:hover::after, .dropzone-holographic.active::after {
+            opacity: 1;
+        }
+        
+        /* --- Styles for Chart Fullscreen Modal --- */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 1100; /* High z-index */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            animation: fadeIn 0.3s forwards;
+        }
+
+        .modal-content-maximized {
+            background-color: rgba(14, 24, 45, 0.9);
+            border: 1px solid rgba(139, 92, 246, 0.5);
+            box-shadow: 0 0 50px rgba(217, 70, 239, 0.2);
+            width: 95vw;
+            height: 95vh;
+            border-radius: 1rem;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            transform: scale(0.95);
+            animation: zoomIn 0.3s forwards;
+        }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes zoomIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+        /* --- Style for glowing chart dots --- */
+        @keyframes pulse-dot-glow {
+            0% {
+                filter: drop-shadow(0 0 2px rgba(0, 255, 255, 0.7));
+            }
+            50% {
+                filter: drop-shadow(0 0 6px rgba(0, 255, 255, 1)) drop-shadow(0 0 12px rgba(255, 255, 255, 0.5));
+            }
+            100% {
+                filter: drop-shadow(0 0 2px rgba(0, 255, 255, 0.7));
+            }
+        }
+
+        .recharts-line-dot circle,
+        .recharts-area-dot circle {
+            animation: pulse-dot-glow 2.5s infinite ease-in-out;
+            transition: filter 0.3s ease;
+        }
+        
+        /* --- NEW: Chart Style Classes --- */
+        .recharts-pie-sector, .recharts-bar-rectangle, .recharts-line-curve, .recharts-area-path {
+            transition: filter 0.2s ease-in-out;
+        }
+        .chart-glow-filter {
+            filter: drop-shadow(0 0 4px currentColor);
+        }
+        .chart-strong-glow-filter {
+            filter: drop-shadow(0 0 8px currentColor);
+        }
+
+        /* --- NEW: Visualization Focus Toggle --- */
+        .focus-toggle-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            padding: 4px;
+            background-color: rgba(14, 24, 45, 0.6); /* dark blue base */
+            border-radius: 9999px;
+            border: 1px solid rgba(139, 92, 246, 0.3); /* purple border */
+            backdrop-filter: blur(8px);
+            width: 200px;
+        }
+        .focus-toggle-slider {
+            position: absolute;
+            top: 4px;
+            bottom: 4px;
+            left: 4px;
+            width: calc(50% - 4px);
+            border-radius: 9999px;
+            background: linear-gradient(45deg, #a855f7, #6366f1);
+            box-shadow: 0 0 10px rgba(168, 85, 247, 0.5), 0 0 15px rgba(99, 102, 241, 0.3);
+            transition: transform 0.35s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+        .focus-toggle-button {
+            position: relative;
+            z-index: 10;
+            width: 50%;
+            padding: 6px 0;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 9999px;
+            transition: color 0.3s ease;
+            background-color: transparent;
+            border: none;
+            color: white; /* Base color for text */
+            cursor: pointer;
+        }
+        .focus-toggle-button.active {
+            color: white;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.7);
+        }
+        .focus-toggle-button.inactive {
+            color: #9ca3af; /* gray-400 */
+        }
+        .focus-toggle-button.inactive:hover {
+            color: #e5e7eb; /* gray-200 */
+        }
+        
+        /* --- NEW: Styles for Welcome Screen Widgets --- */
+        .welcome-widget-container {
+            perspective: 1500px;
+        }
+
+        .welcome-widget {
+            position: relative;
+            background-color: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 0.75rem;
+            transform-style: preserve-3d;
+            transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.4s ease;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .welcome-widget:hover {
+            transform: translateY(-12px) scale(1.05) rotateX(8deg);
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4);
+            border-color: rgba(99, 102, 241, 0.6);
+        }
+
+        .welcome-widget::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 0.75rem;
+            background: radial-gradient(80% 80% at 50% 50%, transparent, rgba(139, 92, 246, 0.15));
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+        }
+
+        .welcome-widget:hover::before {
+            opacity: 1;
+        }
+
+        .welcome-widget .widget-icon {
+            transition: transform 0.4s ease, filter 0.4s ease;
+        }
+        .welcome-widget:hover .widget-icon {
+            transform: scale(1.1) translateY(-5px);
+            filter: drop-shadow(0 0 10px currentColor);
+        }
+        
+        /* --- UPDATED: Holographic Glass Dock Styles (Colorful & Interactive) --- */
+        .glass-dock-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: flex-end; /* Align to bottom for vertical animation */
+            justify-content: center;
+            padding: 10px;
+            height: 80px; /* Give it some height for items to grow into */
+            background: rgba(30, 41, 59, 0.4); /* Dark blue base */
+            backdrop-filter: blur(16px) saturate(1.5);
+            -webkit-backdrop-filter: blur(16px) saturate(1.5);
+            border-radius: 20px;
+            border: 1px solid rgba(139, 92, 246, 0.4);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3), 
+                        inset 0 1px 1px rgba(255, 255, 255, 0.1),
+                        inset 0 -1px 1px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .glass-dock-container::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 20px;
+            padding: 1px; /* To prevent covering the border */
+            background: linear-gradient(45deg, rgba(217, 70, 239, 0.1), rgba(59, 130, 246, 0.1), rgba(34, 197, 94, 0.1));
+            -webkit-mask: 
+                linear-gradient(#fff 0 0) content-box, 
+                linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        .glass-dock-items {
+            display: flex;
+            gap: 16px; /* Increased gap */
+            align-items: flex-end; /* Align to bottom */
+        }
+
+        /* This spotlight will be a colorful animated glow under the icons */
+        .dock-spotlight {
+            position: absolute;
+            bottom: -10px; /* Position below the dock */
+            left: 0;
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.6) 0%, rgba(59, 130, 246, 0.4) 40%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(40px);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        .glass-dock-item {
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+            /* transition will be handled by JS for performance and complexity */
+            will-change: transform; 
+            transition: transform 0.15s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .dock-item-icon {
+            width: 36px;
+            height: 36px;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));
+            transition: filter 0.2s ease, transform 0.2s ease;
+        }
+
+        /* Hover on item changes icon, not the item itself, which is controlled by JS */
+        .glass-dock-item:hover .dock-item-icon {
+            filter: drop-shadow(0 5px 10px rgba(0,0,0,0.5)) drop-shadow(0 0 8px #fff);
+            transform: translateY(-2px); /* Slight icon lift inside the button */
+        }
+
+        .dock-tooltip {
+            position: absolute;
+            bottom: 110%; /* Adjust position based on new dock height */
+            padding: 6px 12px;
+            font-size: 13px;
+            font-weight: 600;
+            color: white;
+            background: rgba(14, 24, 45, 0.85);
+            backdrop-filter: blur(8px);
+            border-radius: 8px;
+            border: 1px solid rgba(139, 92, 246, 0.5);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            white-space: nowrap;
+            opacity: 0;
+            transform: translateY(10px) scale(0.9);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* JS will add a class or style to show tooltip on hover */
+        .glass-dock-item.tooltip-visible .dock-tooltip {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+
+        /* --- UPDATED: Diagramming Matrix Styles (PERFORMANCE) --- */
+        .diagram-canvas {
+            cursor: grab;
+            background-color: #0A0F1E;
+            background-image:
+                radial-gradient(circle at center, rgba(14, 24, 45, 0.8) 0%, transparent 70%),
+                linear-gradient(var(--grid-color, rgba(59, 130, 246, 0.07)) 1px, transparent 1px),
+                linear-gradient(to right, var(--grid-color, rgba(59, 130, 246, 0.07)) 1px, transparent 1px);
+            background-size: 100% 100%, 30px 30px;
+            transition: background-color 0.3s;
+        }
+        .diagram-canvas.grabbing {
+            cursor: grabbing;
+        }
+        .diagram-canvas.presentation-mode {
+          position: fixed;
+          top: 0; left: 0;
+          width: 100vw; height: 100vh;
+          z-index: 2000;
+        }
+        .diagram-canvas.select-mode {
+            cursor: crosshair;
+        }
+
+        .diagram-node {
+            cursor: move;
+            transition: filter 0.2s ease; /* Remove transform for performance */
+            user-select: none;
+        }
+        .diagram-node:hover > * {
+            /* Apply a subtle glow on the child elements to avoid jitter */
+            filter: drop-shadow(0 0 5px rgba(34, 211, 238, 0.6));
+        }
+        .diagram-node.selected > rect,
+        .diagram-node.selected > ellipse,
+        .diagram-node.selected > polygon,
+        .diagram-node.selected > path {
+            stroke: #22d3ee; /* Bright cyan for selection */
+            stroke-width: 3px !important; /* Thicker, static stroke */
+            filter: drop-shadow(0 0 6px #22d3ee); /* Prominent glow on selection */
+            /* Removed unstable animation */
+        }
+        
+        .diagram-node text {
+            user-select: none;
+            pointer-events: none;
+            text-anchor: middle;
+            dominant-baseline: middle;
+        }
+
+        .diagram-edge path {
+            transition: stroke-width 0.2s, opacity 0.2s;
+        }
+        .diagram-edge.selected .edge-path-main {
+            stroke-width: 4px !important;
+            opacity: 1 !important;
+        }
+        .animated-edge-flow {
+            stroke-dasharray: 8;
+            animation: dash-flow 2s linear infinite;
+        }
+        @keyframes dash-flow { to { stroke-dashoffset: -16; } }
+
+        .diagram-edge-label {
+            paint-order: stroke;
+            stroke-width: 4px;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            pointer-events: none;
+        }
+
+        .resize-handle {
+            cursor: nwse-resize;
+            fill: #00ffff;
+            stroke: #0A0F1E;
+            stroke-width: 2px;
+        }
+        .edge-reshape-handle {
+            fill: #22d3ee;
+            stroke: #0A0F1E;
+            stroke-width: 2px;
+            cursor: move;
+            transition: r 0.2s ease;
+        }
+        .edge-reshape-handle:hover {
+            r: 8px;
+            filter: drop-shadow(0 0 4px #22d3ee);
+        }
+
+        .connection-port {
+            fill: #22d3ee;
+            stroke: #0A0F1E;
+            stroke-width: 2px;
+            cursor: crosshair;
+            opacity: 0;
+            transition: opacity 0.2s ease, r 0.2s ease;
+        }
+        .diagram-node:hover .connection-port {
+            opacity: 1;
+        }
+        .connection-port:hover {
+            r: 8px !important;
+        }
+
+        .asset-palette-item {
+          border: 2px solid rgba(139, 92, 246, 0.4);
+          background-color: rgba(14, 24, 45, 0.2);
+          transition: all 0.2s ease-in-out;
+        }
+        .asset-palette-item:hover {
+          transform: scale(1.05);
+          border-color: rgba(59, 130, 246, 0.8);
+          background-color: rgba(14, 24, 45, 0.6);
+        }
+        .exit-presentation-button {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 2001; /* Above presentation canvas */
+            padding: 0.75rem;
+            border-radius: 9999px;
+            background-color: rgba(14, 24, 45, 0.7);
+            border: 1px solid rgba(139, 92, 246, 0.4);
+            color: white;
+            transition: all 0.2s ease-in-out;
+        }
+        .exit-presentation-button:hover {
+            transform: scale(1.1);
+            background-color: rgba(139, 92, 246, 0.4);
+        }
+        /* --- NEW: Diagram Zoom Controls --- */
+        .diagram-controls {
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .diagram-zoom-button {
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(14, 24, 45, 0.7);
+            border: 1px solid rgba(139, 92, 246, 0.4);
+            color: white;
+            border-radius: 9999px;
+            transition: all 0.2s ease-in-out;
+            backdrop-filter: blur(5px);
+        }
+        .diagram-zoom-button:hover {
+            transform: scale(1.1);
+            background-color: rgba(139, 92, 246, 0.4);
+        }
+        .diagram-zoom-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* --- NEW: Marquee Selection for Diagramming --- */
+        .marquee-selection {
+            fill: rgba(34, 211, 238, 0.15);
+            stroke: rgba(34, 211, 238, 0.8);
+            stroke-width: 1px;
+            stroke-dasharray: 4 2;
+        }
+
+        /* --- NEW: Alignment Toolbar for Diagramming --- */
+        .alignment-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            background-color: rgba(14, 24, 45, 0.8);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(139, 92, 246, 0.4);
+            padding: 4px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .alignment-toolbar-button {
+            padding: 6px;
+            color: #d1d5db; /* gray-300 */
+            background-color: transparent;
+            border-radius: 6px;
+            transition: all 0.2s ease-in-out;
+        }
+        .alignment-toolbar-button:hover {
+            background-color: rgba(139, 92, 246, 0.3);
+            color: white;
+        }
+        .alignment-toolbar-button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .alignment-toolbar-separator {
+            width: 1px;
+            height: 20px;
+            background-color: rgba(139, 92, 246, 0.4);
+            margin: 0 4px;
+        }
+        
+        /* --- UPDATED: Dashboard Grid & Widgets --- */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-auto-rows: 100px; /* Base row height */
+            gap: 1.5rem; /* 24px */
+        }
+
+        .widget-wrapper {
+            position: relative;
+            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+        }
+
+        .widget-wrapper.dragging {
+            opacity: 0.5;
+            z-index: 50;
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(168, 85, 247, 0.5);
+        }
+
+        .widget-wrapper .panel-holographic {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .widget-wrapper.edit-mode .panel-holographic {
+            border-style: dashed;
+            border-color: rgba(168, 85, 247, 0.6);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .widget-header-drag-handle {
+            cursor: grab;
+        }
+        
+        .widget-wrapper.edit-mode .widget-header-drag-handle:active {
+            cursor: grabbing;
+        }
+
+        .widget-resize-handle {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 20px;
+            height: 20px;
+            cursor: nwse-resize;
+            z-index: 30;
+        }
+
+        .widget-resize-handle::after {
+            content: '';
+            position: absolute;
+            right: 4px;
+            bottom: 4px;
+            width: 8px;
+            height: 8px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.7);
+            border-right: 2px solid rgba(255, 255, 255, 0.7);
+            border-bottom-right-radius: 2px;
+            transition: all 0.2s;
+        }
+        .widget-resize-handle:hover::after {
+            border-color: #67e8f9; /* cyan-300 */
+        }
+
+        .widget-wrapper.drag-over .panel-holographic {
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.7), inset 0 0 20px rgba(34, 197, 94, 0.4);
+            border-color: rgba(34, 197, 94, 0.8) !important;
+            transform: scale(1.02);
+        }
+
+        .widget-content {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .widget-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: #9ca3af; /* gray-400 */
+            height: 100%;
+            cursor: pointer;
+            border: 2px dashed rgba(139, 92, 246, 0.4);
+            border-radius: 0.5rem;
+            transition: all 0.2s ease-in-out;
+        }
+        .widget-placeholder:hover {
+            background-color: rgba(139, 92, 246, 0.1);
+            border-color: rgba(139, 92, 246, 0.6);
+        }
+
+        .kpi-value {
+            font-size: 4rem; /* 64px */
+            font-weight: 800; /* extrabold */
+            line-height: 1;
+            color: #f0f9ff; /* light-blue-50 */
+            text-shadow: 0 0 15px currentColor;
+        }
+
+        .kpi-label {
+            font-size: 1.125rem; /* 18px */
+            font-weight: 600; /* semibold */
+            color: #7dd3fc; /* light-blue-300 */
+            margin-top: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .widget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            min-height: 2rem; /* Ensure consistent height */
+        }
+
+        .widget-controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .widget-control-button {
+            background-color: rgba(14, 24, 45, 0.7);
+            border: 1px solid rgba(139, 92, 246, 0.4);
+            color: white;
+            padding: 0.375rem; /* 6px */
+            border-radius: 0.375rem; /* 6px */
+            transition: all 0.2s ease-in-out;
+        }
+        .widget-control-button:hover {
+            transform: scale(1.1);
+            background-color: rgba(139, 92, 246, 0.4);
+        }
+
+        .dashboard-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 1100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dashboard-modal-content {
+            background-color: rgba(14, 24, 45, 0.9);
+            border: 1px solid rgba(139, 92, 246, 0.5);
+            box-shadow: 0 0 50px rgba(217, 70, 239, 0.2);
+            width: 90vw;
+            max-width: 600px;
+            border-radius: 1rem;
+            padding: 1.5rem;
+        }
+
+        /* --- NEW: MAP VIEW STYLES --- */
+        .map-container {
+            background: radial-gradient(ellipse at center, rgba(14, 24, 45, 0.5) 0%, #0e182d 70%);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            position: relative;
+            cursor: grab;
+            transition: background 0.3s ease;
+        }
+        .map-container.grabbing { cursor: grabbing; }
+
+        .map-container.theme-light { background: #f9fafc; }
+        .map-container.theme-blueprint {
+            background-color: #0b1a33;
+            background-image: linear-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px), linear-gradient(to right, rgba(59, 130, 246, 0.1) 1px, transparent 1px);
+            background-size: 25px 25px;
+        }
+
+        .map-path {
+            fill: rgba(30, 41, 59, 0.6);
+            stroke: #3b82f6;
+            stroke-width: 0.5;
+            transition: fill 0.3s ease, stroke 0.3s ease;
+        }
+        .map-path:hover { fill: rgba(59, 130, 246, 0.4); }
+        .map-path.selected {
+            fill: rgba(168, 85, 247, 0.5);
+            stroke: #c4b5fd;
+            stroke-width: 1.5px !important;
+            filter: drop-shadow(0 0 8px #a855f7);
+        }
+        .map-theme-light .map-path { fill: #e5e7eb; stroke: #9ca3af; }
+        .map-theme-light .map-path:hover { fill: #d1d5db; }
+        .map-theme-light .map-path.selected { fill: #a5b4fc; stroke: #6366f1; }
+        .map-theme-blueprint .map-path { fill: none; stroke: #3b82f6; stroke-dasharray: 2 2; stroke-opacity: 0.5; }
+        .map-theme-blueprint .map-path.selected { fill: rgba(59, 130, 246, 0.2); stroke: #60a5fa; stroke-dasharray: none; }
+
+
+        .map-dot {
+            transition: all 0.2s ease-in-out;
+            stroke-width: 1;
+            stroke: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+        }
+        .map-dot:hover { stroke-width: 2; stroke: #ffffff; filter: drop-shadow(0 0 4px currentColor); }
+        
+        .map-dot-pulse { animation: pulse-map-dot 2s infinite ease-in-out; }
+        @keyframes pulse-map-dot {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.5; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .heatmap-dot {
+            mix-blend-mode: screen;
+            animation: pulse-heatmap-dot 4s infinite ease-in-out alternate;
+        }
+        @keyframes pulse-heatmap-dot {
+            from { opacity: 0.2; }
+            to { opacity: 0.6; }
+        }
+        
+        .connection-arc {
+            stroke-opacity: 0.7;
+            fill: none;
+            pointer-events: none;
+            animation: draw-arc 1s ease-out forwards;
+        }
+        @keyframes draw-arc {
+            from { stroke-dasharray: 1000; stroke-dashoffset: 1000; }
+            to { stroke-dasharray: 1000; stroke-dashoffset: 0; }
+        }
+        .connection-arc-pulse { animation: pulse-arc 2.5s infinite ease-in-out; }
+        @keyframes pulse-arc {
+            0% { stroke-opacity: 0.8; }
+            50% { stroke-opacity: 0.4; }
+            100% { stroke-opacity: 0.8; }
+        }
+
+        .map-tooltip {
+            position: absolute;
+            background-color: rgba(14, 24, 45, 0.85);
+            backdrop-filter: blur(5px);
+            border: 1px solid #a855f7;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            color: white;
+            font-size: 0.875rem;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            z-index: 1000;
+            min-width: 150px;
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+        }
+
+        /* --- NEW: MAP POPUP STYLES --- */
+        .map-popup {
+            position: absolute;
+            width: 320px;
+            z-index: 1000;
+            transform: translate(-50%, -100%); /* Position above the dot */
+            pointer-events: all;
+        }
+        .map-popup-content-wrapper {
+            background-color: rgba(14, 24, 45, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid #a855f7;
+            border-radius: 0.75rem;
+            color: white;
+            box-shadow: 0 0 30px rgba(168, 85, 247, 0.3);
+            position: relative;
+        }
+        .map-popup-header {
+            padding: 0.75rem;
+            border-bottom: 1px solid rgba(168, 85, 247, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .map-popup-title {
+            font-weight: 600;
+            color: #d8b4fe;
+            font-size: 1rem;
+        }
+        .map-popup-close-button {
+            background: none;
+            border: none;
+            color: #9ca3af;
+            cursor: pointer;
+        }
+        .map-popup-close-button:hover {
+            color: #ffffff;
+        }
+        .map-popup-content {
+            padding: 0.75rem;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+        .map-popup-property {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+            padding: 0.25rem 0;
+            border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+        }
+        .map-popup-property:last-child {
+            border-bottom: none;
+        }
+        .map-popup-key {
+            color: #9ca3af;
+            font-weight: 500;
+        }
+        .map-popup-value {
+            color: #e5e7eb;
+            font-weight: 600;
+            word-break: break-all;
+        }
+        .map-popup-link {
+            display: inline-block;
+            margin-top: 0.5rem;
+            font-weight: bold;
+            color: #60a5fa;
+            transition: color 0.2s;
+        }
+        .map-popup-link:hover {
+            color: #93c5fd;
+            text-decoration: underline;
+        }
+        .map-popup-html-content {
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid rgba(168, 85, 247, 0.3);
+        }
+        .map-popup-html-content * {
+            font-size: inherit !important;
+            color: inherit !important;
+        }
+        .map-popup-html-content a {
+            color: #60a5fa !important;
+        }
+
+        .map-view-dropzone {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        
+        /* --- NEW: Image Filter Controls for Diagramming --- */
+        .image-filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .image-filter-row {
+            display: grid;
+            grid-template-columns: 70px 1fr;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .image-filter-row label {
+            text-align: right;
+            font-size: 12px;
+            color: #9ca3af;
+        }
+        .image-filter-presets {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .image-filter-presets button {
+            padding: 4px 10px;
+            font-size: 12px;
+            background-color: rgba(139, 92, 246, 0.2);
+            border: 1px solid rgba(139, 92, 246, 0.4);
+            border-radius: 9999px;
+            transition: all 0.2s ease-in-out;
+            color: #d1d5db;
+        }
+        .image-filter-presets button:hover {
+            background-color: rgba(139, 92, 246, 0.4);
+            transform: scale(1.05);
+            color: white;
+        }
+        .image-filter-presets button.active {
+            background-color: #a855f7;
+            color: white;
+            box-shadow: 0 0 8px #a855f7;
+        }
+        
+        /* --- NEW: MAP INSPECTOR STYLES --- */
+        .map-inspector {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 300px;
+            max-height: calc(100% - 2rem);
+            z-index: 20;
+            overflow: hidden;
+            border-radius: 0.75rem;
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        }
+        .map-inspector.hidden {
+            transform: translateX(100%);
+            opacity: 0;
+            pointer-events: none;
+        }
+        .map-inspector-content {
+             height: 100%;
+             overflow-y: auto;
+             padding: 1rem;
+        }
+        .map-inspector-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.1.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.1.0/",
+    "react/": "https://esm.sh/react@^19.1.0/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.8.0",
+    "marked": "https://esm.sh/marked@^16.0.0",
+    "recharts": "https://esm.sh/recharts@^3.0.2",
+    "react-dropzone": "https://esm.sh/react-dropzone@^14.3.8",
+    "xlsx": "https://esm.sh/xlsx@^0.18.5",
+    "lucide-react": "https://esm.sh/lucide-react@^0.525.0",
+    "react-markdown": "https://esm.sh/react-markdown@^10.1.0",
+    "remark-gfm": "https://esm.sh/remark-gfm@^4.0.1",
+    "docx": "https://esm.sh/docx@^8.5.0",
+    "pptxgenjs": "https://esm.sh/pptxgenjs@^3.12.0",
+    "jspdf": "https://esm.sh/jspdf@^2.5.1",
+    "jspdf-autotable": "https://esm.sh/jspdf-autotable@^3.8.2"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+</body>
+</html>
